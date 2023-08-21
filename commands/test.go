@@ -21,12 +21,14 @@ type TestCommand struct {
 	Ui         cli.Ui
 	verbose    bool
 	workingDir string
+	path       string
 }
 
 func (c *TestCommand) flags() *flag.FlagSet {
 	fs := defaultFlagSet("test")
 	fs.BoolVar(&c.verbose, "v", false, "whether show terraform logs")
 	fs.StringVar(&c.workingDir, "working-dir", "", "path to Terraform configuration files")
+	fs.StringVar(&c.path, "path", "", "path to the .json swagger which is being test")
 	fs.Usage = func() { c.Ui.Error(c.Help()) }
 	return fs
 }
@@ -71,6 +73,7 @@ func (c TestCommand) Execute() int {
 			return 1
 		}
 	}
+	//report.StoreApiTestReport(wd, c.path)
 	terraform, err := tf.NewTerraform(wd, c.verbose)
 	if err != nil {
 		log.Fatalf("[ERROR] error creating terraform executable: %+v\n", err)
@@ -171,6 +174,16 @@ func (c TestCommand) Execute() int {
 		log.Printf("[INFO] %d API issues.", len(diffReport.Diffs))
 	}
 	log.Printf("[INFO] all reports have been saved in the report directory: %s, please check.", reportDir)
+
+	destroyErr := terraform.Destroy()
+	if destroyErr != nil {
+		log.Printf("[ERROR] error running terraform destroy: %+v\n", destroyErr)
+	} else {
+		log.Println("[INFO] test resource has been deleted")
+	}
+
+	report.StoreApiTestReport(wd, c.path)
+
 	return 1
 }
 
