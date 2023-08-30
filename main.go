@@ -56,6 +56,11 @@ func main() {
 				Ui: ui,
 			}, nil
 		},
+		"report": func() (cli.Command, error) {
+			return &commands.ReportCommand{
+				Ui: ui,
+			}, nil
+		},
 	}
 
 	exitStatus, err := c.Run()
